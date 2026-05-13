@@ -1,0 +1,159 @@
+package tests
+
+import (
+	"testing"
+
+	"github.com/ingonyama-zk/icicle/v3/wrappers/golang/core"
+	{{.Field}} "github.com/ingonyama-zk/icicle/v3/wrappers/golang/{{.BaseImportPath}}"
+	{{- if eq .FieldPrefix "Extension" }}
+	{{ .SecondField }} "github.com/ingonyama-zk/icicle/v3/wrappers/golang/{{ .SecondImportPath }}"
+	{{- end }}
+	"github.com/ingonyama-zk/icicle/v3/wrappers/golang/{{.BaseImportPath}}/vecOps"
+	"github.com/stretchr/testify/suite"
+	"github.com/ingonyama-zk/icicle/v3/wrappers/golang/internal/test_helpers"
+)
+
+func test{{capitalize .Field}}VecOps(suite *suite.Suite) {
+	testSize := 1 << 14
+
+	a := {{.Field}}.GenerateScalars(testSize)
+	b := {{.Field}}.GenerateScalars(testSize)
+	var scalar {{.Field}}.{{.FieldPrefix}}Field
+	scalar.One()
+	ones := core.HostSliceWithValue(scalar, testSize)
+
+	out := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], testSize)
+	out2 := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], testSize)
+	out3 := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], testSize)
+
+	cfg := core.DefaultVecOpsConfig()
+
+	vecOps.VecOp(a, b, out, cfg, core.Add)
+	vecOps.VecOp(out, b, out2, cfg, core.Sub)
+
+	suite.Equal(a, out2)
+
+	vecOps.VecOp(a, ones, out3, cfg, core.Mul)
+
+	suite.Equal(a, out3)
+}
+
+func test{{capitalize .Field}}Transpose(suite *suite.Suite) {
+	rowSize := 1 << 6
+	columnSize := 1 << 8
+
+	matrix := {{.Field}}.GenerateScalars(rowSize * columnSize)
+
+	out := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], rowSize*columnSize)
+	out2 := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], rowSize*columnSize)
+
+	cfg := core.DefaultVecOpsConfig()
+
+	vecOps.TransposeMatrix(matrix, out, columnSize, rowSize, cfg)
+	vecOps.TransposeMatrix(out, out2, rowSize, columnSize, cfg)
+
+	suite.Equal(matrix, out2)
+
+	var dMatrix, dOut, dOut2 core.DeviceSlice
+
+	matrix.CopyToDevice(&dMatrix, true)
+	dOut.Malloc(matrix.SizeOfElement(), columnSize*rowSize)
+	dOut2.Malloc(matrix.SizeOfElement(), columnSize*rowSize)
+
+	vecOps.TransposeMatrix(dMatrix, dOut, columnSize, rowSize, cfg)
+	vecOps.TransposeMatrix(dOut, dOut2, rowSize, columnSize, cfg)
+	output := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], rowSize*columnSize)
+	output.CopyFromDevice(&dOut2)
+
+	suite.Equal(matrix, output)
+}
+
+func test{{capitalize .Field}}Sum(suite *suite.Suite) {
+	testSize := 1 << 14
+	batchSize := 3
+
+	a := {{.Field}}.GenerateScalars(testSize * batchSize)
+	result := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], batchSize)
+	result2 := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], batchSize)
+
+	cfg := core.DefaultVecOpsConfig()
+	cfg.BatchSize = int32(batchSize)
+
+	// CPU run
+	test_helpers.ActivateReferenceDevice()
+	vecOps.ReductionVecOp(a, result, cfg, core.Sum)
+
+	// Cuda run
+	test_helpers.ActivateMainDevice()
+	var dA, dResult core.DeviceSlice
+	a.CopyToDevice(&dA, true)
+	dResult.Malloc(a.SizeOfElement()*batchSize, batchSize)
+
+	vecOps.ReductionVecOp(dA, dResult, cfg, core.Sum)
+	result2.CopyFromDevice(&dResult)
+
+	suite.Equal(result, result2)
+}
+
+func test{{capitalize .Field}}Product(suite *suite.Suite) {
+	testSize := 1 << 14
+	batchSize := 3
+
+	a := {{.Field}}.GenerateScalars(testSize * batchSize)
+	result := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], batchSize)
+	result2 := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], batchSize)
+
+	cfg := core.DefaultVecOpsConfig()
+	cfg.BatchSize = int32(batchSize)
+
+	// CPU run
+	test_helpers.ActivateReferenceDevice()
+	vecOps.ReductionVecOp(a, result, cfg, core.Product)
+
+	// Cuda run
+	test_helpers.ActivateMainDevice()
+	var dA, dResult core.DeviceSlice
+	a.CopyToDevice(&dA, true)
+	dResult.Malloc(a.SizeOfElement()*batchSize, batchSize)
+
+	vecOps.ReductionVecOp(dA, dResult, cfg, core.Product)
+	result2.CopyFromDevice(&dResult)
+
+	suite.Equal(result, result2)
+}
+
+{{if eq .FieldPrefix "Extension"}}
+func test{{capitalize .Field}}MixedVecOps(suite *suite.Suite) {
+	testSize := 1 << 14
+
+	a := {{.Field}}.GenerateScalars(testSize)
+	var scalar {{.SecondField}}.ScalarField
+	scalar.One()
+	ones := core.HostSliceWithValue(scalar, testSize)
+
+	out := make(core.HostSlice[{{.Field}}.{{.FieldPrefix}}Field], testSize)
+
+	cfg := core.DefaultVecOpsConfig()
+
+	vecOps.MixedVecOp(a, ones, out, cfg, core.Mul)
+
+	suite.Equal(a, out)
+}
+{{end}}
+
+type {{capitalize .Field}}VecOpsTestSuite struct {
+	suite.Suite
+}
+
+func (s *{{capitalize .Field}}VecOpsTestSuite) Test{{capitalize .Field}}VecOps() {
+	s.Run("Test{{capitalize .Field}}VecOps", testWrapper(&s.Suite, test{{capitalize .Field}}VecOps))
+	s.Run("Test{{capitalize .Field}}Transpose", testWrapper(&s.Suite, test{{capitalize .Field}}Transpose))
+	s.Run("Test{{capitalize .Field}}Sum", testWrapper(&s.Suite, test{{capitalize .Field}}Sum))
+	s.Run("Test{{capitalize .Field}}Product", testWrapper(&s.Suite, test{{capitalize .Field}}Product))
+	{{- if eq .FieldPrefix "Extension"}}
+	s.Run("Test{{capitalize .Field}}MixedVecOps", testWrapper(&s.Suite, test{{capitalize .Field}}MixedVecOps)){{end}}
+}
+
+func TestSuite{{capitalize .Field}}VecOps(t *testing.T) {
+	suite.Run(t, new({{capitalize .Field}}VecOpsTestSuite))
+}
