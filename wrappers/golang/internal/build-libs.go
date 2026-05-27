@@ -62,9 +62,6 @@ func main() {
 		G2Defined:        "ON",
 		EcnttDefined:     "ON",
 		ExtField:         "ON",
-		Hash:             "OFF",
-		Poseidon:         "OFF",
-		Poseidon2:        "OFF",
 		CudaCompilerPath: "/usr/local/cuda/bin/nvcc",
 		DevMode:          "OFF",
 		CudaBackend:      "OFF",
@@ -73,7 +70,6 @@ func main() {
 
 	// Setup command line flags
 	curves := flag.String("curve", "", "Comma-separated list of curves")
-	// fields := flag.String("field", "", "Comma-separated list of fields")
 	skipMsm := flag.Bool("skip-msm", false, "Skip MSM")
 	skipNtt := flag.Bool("skip-ntt", false, "Skip NTT")
 	skipG2 := flag.Bool("skip-g2", false, "Skip G2")

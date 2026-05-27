@@ -1,11 +1,12 @@
-use icicle_bls12_381::curve::{ScalarCfg as BLS12381ScalarCfg, ScalarField as BLS12381ScalarField};
-use icicle_bn254::curve::{ScalarCfg as Bn254ScalarCfg, ScalarField as Bn254ScalarField};
+use icicle_bls12_381::curve::ScalarField as BLS12381ScalarField;
+use icicle_bn254::curve::ScalarField;
+use icicle_core::bignum::BigNum;
 use icicle_runtime::memory::{DeviceVec, HostSlice};
 
 use clap::Parser;
 use icicle_core::{
     ntt::{self, initialize_domain},
-    traits::{FieldImpl, GenerateRandom},
+    traits::GenerateRandom,
 };
 use std::convert::TryInto;
 use std::time::Instant;
@@ -47,33 +48,35 @@ fn main() {
 
     // Setting Bn254 points and scalars
     println!("Generating random inputs on host for bn254...");
-    let scalars = Bn254ScalarCfg::generate_random(size);
-    let mut ntt_results = DeviceVec::<Bn254ScalarField>::device_malloc(size).unwrap();
+    let scalars = ScalarField::generate_random(size);
+    let mut ntt_results = DeviceVec::<ScalarField>::device_malloc(size).unwrap();
 
     // Setting bls12381 points and scalars
     println!("Generating random inputs on host for bls12381...");
-    let scalars_bls12381 = BLS12381ScalarCfg::generate_random(size);
+    let scalars_bls12381 = BLS12381ScalarField::generate_random(size);
     let mut ntt_results_bls12381 = DeviceVec::<BLS12381ScalarField>::device_malloc(size).unwrap();
 
     println!("Setting up bn254 Domain...");
     initialize_domain(
-        ntt::get_root_of_unity::<Bn254ScalarField>(
+        ntt::get_root_of_unity::<ScalarField>(
             size.try_into()
                 .unwrap(),
-        ),
+        )
+        .unwrap(),
         &ntt::NTTInitDomainConfig::default(),
     )
     .unwrap();
 
     println!("Configuring bn254 NTT...");
-    let cfg = ntt::NTTConfig::<Bn254ScalarField>::default();
+    let cfg = ntt::NTTConfig::<ScalarField>::default();
 
     println!("Setting up bls12381 Domain...");
     initialize_domain(
         ntt::get_root_of_unity::<BLS12381ScalarField>(
             size.try_into()
                 .unwrap(),
-        ),
+        )
+        .unwrap(),
         &ntt::NTTInitDomainConfig::default(),
     )
     .unwrap();
@@ -107,14 +110,14 @@ fn main() {
     )
     .unwrap();
     println!(
-        "ICICLE BLS12381 NTT on size 2^{log_size} took: {} μs",
+        "ICICLE Bls12381 NTT on size 2^{log_size} took: {} μs",
         start
             .elapsed()
             .as_micros()
     );
 
     println!("Moving results to host...");
-    let mut host_bn254_results = vec![Bn254ScalarField::zero(); size];
+    let mut host_bn254_results = vec![ScalarField::zero(); size];
     ntt_results
         .copy_to_host(HostSlice::from_mut_slice(&mut host_bn254_results[..]))
         .unwrap();

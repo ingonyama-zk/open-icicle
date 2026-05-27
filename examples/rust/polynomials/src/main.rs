@@ -1,12 +1,14 @@
-use icicle_bn254::curve::ScalarField as bn254Scalar;
+use icicle_bn254::curve::ScalarField as Bn254ScalarField;
 use icicle_bn254::polynomials::DensePolynomial as PolynomialBn254;
+use icicle_core::bignum::BigNum;
 
 use icicle_runtime::memory::{DeviceVec, HostSlice};
 
+use icicle_core::field::Field;
 use icicle_core::{
     ntt::{get_root_of_unity, initialize_domain, NTTInitDomainConfig},
     polynomials::UnivariatePolynomial,
-    traits::{FieldImpl, GenerateRandom},
+    traits::GenerateRandom,
 };
 
 use clap::Parser;
@@ -41,18 +43,17 @@ fn init_ntt_domain(max_ntt_size: u64) {
         "Initializing NTT domain for max size 2^{}",
         max_ntt_size.trailing_zeros()
     );
-    let rou_bn254: bn254Scalar = get_root_of_unity(max_ntt_size);
+    let rou_bn254: Bn254ScalarField = get_root_of_unity(max_ntt_size).unwrap();
     initialize_domain(rou_bn254, &NTTInitDomainConfig::default()).unwrap();
 }
 
 fn randomize_poly<P>(size: usize, from_coeffs: bool) -> P
 where
     P: UnivariatePolynomial,
-    P::Field: FieldImpl,
-    P::FieldConfig: GenerateRandom<P::Field>,
+    P::Coeff: Field + GenerateRandom,
 {
     println!("Randomizing polynomial of size {} (from_coeffs: {})", size, from_coeffs);
-    let coeffs_or_evals = P::FieldConfig::generate_random(size);
+    let coeffs_or_evals = P::Coeff::generate_random(size);
     let p = if from_coeffs {
         P::from_coeffs(HostSlice::from_slice(&coeffs_or_evals), size)
     } else {
@@ -62,7 +63,7 @@ where
 }
 //use UnivariatePolynomial trait to perform polynomial operations on arbitrary fields
 //fold_poly takes a polynomial and a scalar as input and returns a polynomial
-fn fold_poly<P: UnivariatePolynomial>(poly: P, beta: P::Field) -> P {
+fn fold_poly<P: UnivariatePolynomial>(poly: P, beta: P::Coeff) -> P {
     let o = poly.odd(); // Get the odd terms (in coeff form)
     let e = poly.even(); // Get the even terms (in coeff form)
                          // Perform the fold operation: e + (o * beta)
@@ -85,7 +86,6 @@ fn main() {
     let g = randomize_poly::<PolynomialBn254>(poly_size / 2, true /*from random coeffs*/);
     let h = randomize_poly::<PolynomialBn254>(poly_size / 4, false /*from random evaluations on rou*/);
 
-
     let start = Instant::now();
     // Arithmetic
     println!("Computing t0(x) = f(x) + g(x)");
@@ -95,18 +95,17 @@ fn main() {
     println!("Computing q(x),r(x) = t1(x)/t0(x) (where t1(x) = q(x) * t0(x) + r(x))");
     let (q, r) = t1.divide(&t0);
 
-
     // Check degree
     println!("Degree of r(x): {}", r.degree());
 
     // Evaluate in single domain point
-    let five = bn254Scalar::from_u32(5);
+    let five = Bn254ScalarField::from_u32(5);
     println!("Evaluating q(5)");
     let q_at_five = q.eval(&five);
 
     // Evaluate on domain
-    let host_domain = [five, bn254Scalar::from_u32(30)];
-    let mut device_image = DeviceVec::<bn254Scalar>::device_malloc(host_domain.len()).unwrap();
+    let host_domain = [five, Bn254ScalarField::from_u32(30)];
+    let mut device_image = DeviceVec::<Bn254ScalarField>::device_malloc(host_domain.len()).unwrap();
     println!("Evaluating t1(x) on domain {:?}", host_domain);
     t1.eval_on_domain(HostSlice::from_slice(&host_domain), &mut device_image[..]); // for NTT use eval_on_rou_domain()
 

@@ -2,6 +2,7 @@
 
 #include "icicle/vec_ops.h"
 #include "icicle/fields/field_config.h"
+#include "icicle/norm.h"
 using namespace field_config;
 
 namespace icicle {
@@ -52,6 +53,13 @@ namespace icicle {
 
   using scalarHighNonZeroIdxOpImpl = std::function<eIcicleError(
     const Device& device, const scalar_t* input, uint64_t size, const VecOpsConfig& config, int64_t* out_idx)>;
+
+  using programExecutionImpl = std::function<eIcicleError(
+    const Device& device,
+    std::vector<scalar_t*>& data,
+    const Program<scalar_t>& program,
+    uint64_t size,
+    const VecOpsConfig& config)>;
 
   using scalarPolyEvalImpl = std::function<eIcicleError(
     const Device& device,
@@ -249,6 +257,16 @@ namespace icicle {
   namespace {                                                                                                          \
     static bool UNIQUE(_reg_poly_division) = []() -> bool {                                                            \
       register_poly_division(DEVICE_TYPE, FUNC);                                                                       \
+      return true;                                                                                                     \
+    }();                                                                                                               \
+  }
+
+  void register_execute_program(const std::string& deviceType, programExecutionImpl);
+
+#define REGISTER_EXECUTE_PROGRAM_BACKEND(DEVICE_TYPE, FUNC)                                                            \
+  namespace {                                                                                                          \
+    static bool UNIQUE(_reg_program_execution) = []() -> bool {                                                        \
+      register_execute_program(DEVICE_TYPE, FUNC);                                                                     \
       return true;                                                                                                     \
     }();                                                                                                               \
   }
@@ -463,9 +481,73 @@ namespace icicle {
         return true;                                                                                                   \
       }();                                                                                                             \
     }
+
+  using extProgramExecutionImpl = std::function<eIcicleError(
+    const Device& device,
+    std::vector<extension_t*>& data,
+    const Program<extension_t>& program,
+    uint64_t size,
+    const VecOpsConfig& config)>;
+
+  void register_extension_execute_program(const std::string& deviceType, extProgramExecutionImpl);
+
+  #define REGISTER_EXECUTE_PROGRAM_EXT_FIELD_BACKEND(DEVICE_TYPE, FUNC)                                                \
+    namespace {                                                                                                        \
+      static bool UNIQUE(_reg_program_execution) = []() -> bool {                                                      \
+        register_extension_execute_program(DEVICE_TYPE, FUNC);                                                         \
+        return true;                                                                                                   \
+      }();                                                                                                             \
+    }
 #endif // EXT_FIELD
 
-#ifdef RING // for RNS type
+#ifdef RING
+  // for Zq type
+
+  // This should be the same for all the devices to get a deterministic result
+  const size_t RANDOM_SAMPLING_FAST_MODE_NUMBER_OF_TASKS = 256;
+
+  using ringZqRandomSamplingImpl = std::function<eIcicleError(
+    const Device& device,
+    size_t size,
+    bool fast_mode,
+    const std::byte* seed,
+    size_t seed_len,
+    const VecOpsConfig& cfg,
+    field_t* output)>;
+  void register_ring_zq_random_sampling(const std::string& deviceType, ringZqRandomSamplingImpl);
+
+  #define REGISTER_RING_ZQ_RANDOM_SAMPLING_BACKEND(DEVICE_TYPE, FUNC)                                                  \
+    namespace {                                                                                                        \
+      static bool UNIQUE(_reg_ring_zq_random_sampling) = []() -> bool {                                                \
+        register_ring_zq_random_sampling(DEVICE_TYPE, FUNC);                                                           \
+        return true;                                                                                                   \
+      }();                                                                                                             \
+    }
+
+  // for Rq type
+
+  using challengeSpacePolynomialsSamplingImpl = std::function<eIcicleError(
+    const Device& device,
+    const std::byte* seed,
+    size_t seed_len,
+    size_t size,
+    uint32_t ones,
+    uint32_t twos,
+    uint64_t norm,
+    const VecOpsConfig& cfg,
+    Rq* output)>;
+  void
+  register_challenge_space_polynomials_sampling(const std::string& deviceType, challengeSpacePolynomialsSamplingImpl);
+
+  #define REGISTER_CHALLENGE_SPACE_POLYNOMIALS_SAMPLING_BACKEND(DEVICE_TYPE, FUNC)                                     \
+    namespace {                                                                                                        \
+      static bool UNIQUE(_reg_challenge_space_polynomials_sampling) = []() -> bool {                                   \
+        register_challenge_space_polynomials_sampling(DEVICE_TYPE, FUNC);                                              \
+        return true;                                                                                                   \
+      }();                                                                                                             \
+    }
+
+  // for RNS type
   using ringRnsVectorReduceOpImpl = std::function<eIcicleError(
     const Device& device, const scalar_rns_t* vec_a, uint64_t size, const VecOpsConfig& config, scalar_rns_t* output)>;
   using ringRnsVectorOpImpl = std::function<eIcicleError(
@@ -645,6 +727,24 @@ namespace icicle {
       }();                                                                                                             \
     }
 
+  using ringPolyRingMatrixOpImpl = std::function<eIcicleError(
+    const Device& device,
+    const PolyRing* in,
+    uint32_t nof_rows,
+    uint32_t nof_cols,
+    const VecOpsConfig& config,
+    PolyRing* out)>;
+
+  void register_poly_ring_matrix_transpose(const std::string& deviceType, ringPolyRingMatrixOpImpl impl);
+
+  #define REGISTER_MATRIX_TRANSPOSE_POLY_RING_BACKEND(DEVICE_TYPE, FUNC)                                               \
+    namespace {                                                                                                        \
+      static bool UNIQUE(_reg_matrix_transpose_poly_ring) = []() -> bool {                                             \
+        register_poly_ring_matrix_transpose(DEVICE_TYPE, FUNC);                                                        \
+        return true;                                                                                                   \
+      }();                                                                                                             \
+    }
+
   using ringRnsBitReverseOpImpl = std::function<eIcicleError(
     const Device& device, const scalar_rns_t* input, uint64_t size, const VecOpsConfig& config, scalar_rns_t* output)>;
 
@@ -703,6 +803,23 @@ namespace icicle {
       }();                                                                                                             \
     }
 
+  using rnsProgramExecutionImpl = std::function<eIcicleError(
+    const Device& device,
+    std::vector<scalar_rns_t*>& data,
+    const Program<scalar_rns_t>& program,
+    uint64_t size,
+    const VecOpsConfig& config)>;
+
+  void register_rns_execute_program(const std::string& deviceType, rnsProgramExecutionImpl);
+
+  #define REGISTER_EXECUTE_PROGRAM_RING_RNS_BACKEND(DEVICE_TYPE, FUNC)                                                 \
+    namespace {                                                                                                        \
+      static bool UNIQUE(_reg_program_execution_rns) = []() -> bool {                                                  \
+        register_rns_execute_program(DEVICE_TYPE, FUNC);                                                               \
+        return true;                                                                                                   \
+      }();                                                                                                             \
+    }
+
   using balancedDecompositionImpl = std::function<eIcicleError(
     const Device& device,
     const field_t* input,
@@ -724,29 +841,6 @@ namespace icicle {
       }();                                                                                                             \
     }
 
-  using balancedDecompositionPolyRingImpl = std::function<eIcicleError(
-    const Device& device,
-    const PolyRing* input,
-    size_t input_size,
-    uint32_t base,
-    const VecOpsConfig& config,
-    PolyRing* output,
-    size_t output_size)>;
-
-  void
-  register_decompose_balanced_digits_poly_ring(const std::string& deviceType, balancedDecompositionPolyRingImpl impl);
-  void register_recompose_from_balanced_digits_poly_ring(
-    const std::string& deviceType, balancedDecompositionPolyRingImpl impl);
-
-  #define REGISTER_BALANCED_DECOMPOSITION_POLYRING_BACKEND(DEVICE_TYPE, DECOMPOSE, RECOMPOSE)                          \
-    namespace {                                                                                                        \
-      static bool UNIQUE(_reg_balanced_recomposition_poly_ring) = []() -> bool {                                       \
-        register_decompose_balanced_digits_poly_ring(DEVICE_TYPE, DECOMPOSE);                                          \
-        register_recompose_from_balanced_digits_poly_ring(DEVICE_TYPE, RECOMPOSE);                                     \
-        return true;                                                                                                   \
-      }();                                                                                                             \
-    }
-
   using JLProjectionImpl = std::function<eIcicleError(
     const Device& device,
     const field_t* input,
@@ -757,11 +851,25 @@ namespace icicle {
     field_t* output,
     size_t output_size)>;
 
+  using JLProjectionGetRowsImpl = std::function<eIcicleError(
+    const Device& device,
+    const std::byte* seed,
+    size_t seed_len,
+    size_t row_size,
+    size_t start_row,
+    size_t num_rows,
+    bool negacyclic_conjugate,
+    size_t polyring_size_for_conjugate,
+    const VecOpsConfig& cfg,
+    field_t* output)>;
+
   void register_jl_projection(const std::string& deviceType, JLProjectionImpl impl);
-  #define REGISTER_JL_PROJECTION_BACKEND(DEVICE_TYPE, FUNC)                                                            \
+  void register_jl_projection_get_rows(const std::string& deviceType, JLProjectionGetRowsImpl impl);
+  #define REGISTER_JL_PROJECTION_BACKEND(DEVICE_TYPE, PROJECTION, GET_ROWS)                                            \
     namespace {                                                                                                        \
       static bool UNIQUE(_reg_jl_projection) = []() -> bool {                                                          \
-        register_jl_projection(DEVICE_TYPE, FUNC);                                                                     \
+        register_jl_projection(DEVICE_TYPE, PROJECTION);                                                               \
+        register_jl_projection_get_rows(DEVICE_TYPE, GET_ROWS);                                                        \
         return true;                                                                                                   \
       }();                                                                                                             \
     }

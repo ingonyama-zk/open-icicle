@@ -1,5 +1,3 @@
-
-
 #include <unordered_map>
 #include <vector>
 #include <type_traits>
@@ -465,7 +463,7 @@ namespace ntt {
       S omega = primitive_root;
       unsigned omegas_count = S::get_omegas_count();
       for (int i = 0; i < omegas_count; i++) {
-        omega = S::sqr(omega);
+        omega = omega.sqr();
         if (!found_logn) {
           ++domain.max_log_size;
           found_logn = omega == S::one();
@@ -718,7 +716,7 @@ namespace ntt {
       // if coset index is not found in the subgroup, compute coset powers on CPU and move them to device
       std::vector<S> h_coset;
       h_coset.push_back(S::one());
-      S coset_gen = (dir == NTTDir::kInverse) ? S::inverse(config.coset_gen) : config.coset_gen;
+      S coset_gen = (dir == NTTDir::kInverse) ? config.coset_gen.inverse() : config.coset_gen;
       for (int i = 1; i < size; i++) {
         h_coset.push_back(h_coset.at(i - 1) * coset_gen);
       }

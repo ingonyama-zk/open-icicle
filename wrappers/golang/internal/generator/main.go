@@ -15,6 +15,8 @@ import (
 	msm "github.com/ingonyama-zk/icicle/v3/wrappers/golang/internal/generator/msm"
 	ntt "github.com/ingonyama-zk/icicle/v3/wrappers/golang/internal/generator/ntt"
 	poly "github.com/ingonyama-zk/icicle/v3/wrappers/golang/internal/generator/polynomial"
+	"github.com/ingonyama-zk/icicle/v3/wrappers/golang/internal/generator/poseidon"
+	"github.com/ingonyama-zk/icicle/v3/wrappers/golang/internal/generator/poseidon2"
 	"github.com/ingonyama-zk/icicle/v3/wrappers/golang/internal/generator/tests"
 	vecops "github.com/ingonyama-zk/icicle/v3/wrappers/golang/internal/generator/vecOps"
 )

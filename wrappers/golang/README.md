@@ -41,14 +41,23 @@ go run build-libs.go -curve=bn254 -skip-g2 -skip-ecntt
 
 ### Supported curves and operations
 
-| Operation\Curve | bn254 | bls12_381 |
-| --- | :---: | :---: | 
-| MSM | ✅ | ✅ | 
-| G2  | ✅ | ✅ | 
-| NTT | ✅ | ✅ | 
-| ECNTT | ✅ | ✅ | 
-| VecOps | ✅ | ✅ | 
-| Polynomials | ✅ | ✅ |
+| Operation\Curve | bn254 | bls12_377 | bls12_381 | bw6-761 | grumpkin |
+| --- | :---: | :---: | :---: | :---: | :---: |
+| MSM | ✅ | ✅ | ✅ | ✅ | ✅ |
+| G2  | ✅ | ✅ | ✅ | ✅ | ❌ |
+| NTT | ✅ | ✅ | ✅ | ✅ | ❌ |
+| ECNTT | ✅ | ✅ | ✅ | ✅ | ❌ |
+| VecOps | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Polynomials | ✅ | ✅ | ✅ | ✅ | ❌ |
+
+### Supported fields and operations
+
+| Operation\Field | babybear |
+| --- | :---: |
+| VecOps | ✅ |
+| Polynomials | ✅ |
+| NTT | ✅ |
+| Extension Field | ✅ |
 
 ## Using the Go frontend
 

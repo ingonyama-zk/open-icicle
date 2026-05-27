@@ -45,6 +45,7 @@ target_sources(icicle_device PRIVATE src/cpu_device_api.cpp)
 if (FIELD)
     target_sources(icicle_field PRIVATE
         src/field/cpu_vec_ops.cpp
+        src/field/cpu_matrix_ops.cpp
     )
     if (NTT)
         target_sources(icicle_field PRIVATE src/field/cpu_ntt.cpp src/polynomials/cpu_polynomial_backend.cpp)

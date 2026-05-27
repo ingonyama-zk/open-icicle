@@ -12,7 +12,7 @@ err := Msm(
   /* Projective point result */ results)
 ```
 
-In this example we use `BN254` and `BLS12381` curves. The function computes $result = \sum_{i=0}^{size-1} scalars[i] \cdot points[i]$, where input `points[]` uses affine coordinates, and `result` uses projective coordinates.
+In this example we use `BN254` and `BLS12377` curves. The function computes $result = \sum_{i=0}^{size-1} scalars[i] \cdot points[i]$, where input `points[]` uses affine coordinates, and `result` uses projective coordinates.
 
 ## What's in the example
 

@@ -69,7 +69,7 @@ public:
     Z3 = Z3 + Z3;                                                                // 4. Z3 ← Z3 + Z3
     BaseField t1 = Y * Z;                                                        // 5. t1 ← Y · Z
     BaseField t2 = Z.sqr();                                                      // 6. t2 ← Z · Z
-    t2 = (t2 * BaseField{Gen::weierstrass_b}).template mul_unsigned<3>();         // 7. t2 ← 3b · t2
+    t2 = t2.template mul_const<Gen::weierstrass_b>().template mul_unsigned<3>(); // 7. t2 ← 3b · t2
     BaseField X3 = t2 * Z3;                                                      // 8. X3 ← t2 · Z3
     BaseField Y3 = t0 + t2;                                                      // 9. Y3 ← t0 + t2
     Z3 = t1 * Z3;                                                                // 10. Z3 ← t1 · Z3
@@ -138,11 +138,11 @@ public:
     const BaseField t18 = t00 + t00; // t18 ← t00 + t00   < 2
     const BaseField t19 = t18 + t00; // t19 ← t18 + t00   < 2
     const BaseField t20 =            // t20 ← b3 · t02    < 2
-      (t02 * BaseField{Gen::weierstrass_b}).template mul_unsigned<3>();
+      t02.template mul_const<Gen::weierstrass_b>().template mul_unsigned<3>();
     const BaseField t21 = t01 + t20; // t21 ← t01 + t20   < 2
     const BaseField t22 = t01 - t20; // t22 ← t01 − t20   < 2
     const BaseField t23 =            // t23 ← b3 · t17    < 2
-      (t17 * BaseField{Gen::weierstrass_b}).template mul_unsigned<3>();
+      t17.template mul_const<Gen::weierstrass_b>().template mul_unsigned<3>();
     // const auto t24 = BaseField::mul_wide(t12, t23); // t24 ← t12 · t23   < 2
     // const auto t25 = BaseField::mul_wide(t07, t22); // t25 ← t07 · t22   < 2
     // const BaseField X3 = (t25 - t24).reduce();      // X3 ← t25 − t24    < 2
@@ -197,11 +197,11 @@ public:
     const BaseField t18 = t00 + t00; // t18 ← t00 + t00   < 2
     const BaseField t19 = t18 + t00; // t19 ← t18 + t00   < 2
     const BaseField t20 =            // t20 ← b3 · t02    < 2
-      (t02 * BaseField{Gen::weierstrass_b}).template mul_unsigned<3>();
+      t02.template mul_const<Gen::weierstrass_b>().template mul_unsigned<3>();
     const BaseField t21 = t01 + t20; // t21 ← t01 + t20   < 2
     const BaseField t22 = t01 - t20; // t22 ← t01 − t20   < 2
     const BaseField t23 =            // t23 ← b3 · t17    < 2
-      (t17 * BaseField{Gen::weierstrass_b}).template mul_unsigned<3>();
+      t17.template mul_const<Gen::weierstrass_b>().template mul_unsigned<3>();
     // const auto t24 = BaseField::mul_wide(t12, t23); // t24 ← t12 · t23   < 2
     // const auto t25 = BaseField::mul_wide(t07, t22); // t25 ← t07 · t22   < 2
     // const BaseField X3 = (t25 - t24).reduce();      // X3 ← t25 − t24    < 2
@@ -274,7 +274,7 @@ public:
   bool is_on_curve() const
   {
     if (this->is_zero()) return true;
-    const BaseField ls = (this->z.sqr() * this->z) * BaseField{Gen::weierstrass_b} + this->x.sqrt() * this->x;
+    const BaseField ls = (this->z.sqr() * this->z).template mul_const<Gen::weierstrass_b>() + this->x.sqrt() * this->x;
     const BaseField rs = this->z * this->y.sqr();
     return this->z != BaseField::zero() && ls == rs;
   }

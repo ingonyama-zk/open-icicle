@@ -6,6 +6,7 @@ members = [
     "polynomials",
     "arkworks-icicle-conversions",
 ]
+exclude = ["install-and-use-icicle"]
 
 [workspace.dependencies]
 # Add any shared dependencies here

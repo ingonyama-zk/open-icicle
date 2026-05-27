@@ -13,7 +13,7 @@ namespace montgomery {
   __global__ void MontgomeryKernel(const E* input, int n, E* output)
   {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    if (tid < n) { output[tid] = is_into ? E::to_montgomery(input[tid]) : E::from_montgomery(input[tid]); }
+    if (tid < n) { output[tid] = is_into ? input[tid].to_montgomery() : input[tid].from_montgomery(); }
   }
 
   template <typename E, bool is_into>

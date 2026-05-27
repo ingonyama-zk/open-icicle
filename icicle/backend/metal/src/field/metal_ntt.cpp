@@ -36,7 +36,7 @@ public:
     S omega = primitive_root;
     const unsigned omegas_count = S::get_omegas_count();
     for (int i = 0; i < omegas_count; i++) {
-      omega = S::sqr(omega);
+      omega = omega.sqr();
       if (!found_logn) {
         ++m_domain_log_size;
         found_logn = omega == S::one();
@@ -81,9 +81,9 @@ public:
     m_m_coset_index_map.clear();
     m_m_coset_index_map[S::one()] = 0;
     for (int i = 0; i < m_domain_log_size; ++i) {
-      const int index = 1 << i;                        // 2^i
-      const S twiddle = S::pow(primitive_root, index); // primitive_root^index
-      m_m_coset_index_map[twiddle] = index;            // map w^index to index
+      const int index = 1 << i;                    // 2^i
+      const S twiddle = primitive_root.pow(index); // primitive_root^index
+      m_m_coset_index_map[twiddle] = index;        // map w^index to index
     }
 
     m_twiddles = twiddlesBuffer;
@@ -125,7 +125,7 @@ public:
                        << "). Consider generating your domain with a higher order root of unity.\n ";
       return eIcicleError::INVALID_ARGUMENT;
     }
-    *rou = S::pow(m_primitive_root, 1 << (m_domain_log_size - logn));
+    *rou = m_primitive_root.pow(1 << (m_domain_log_size - logn));
     return eIcicleError::SUCCESS;
   }
 

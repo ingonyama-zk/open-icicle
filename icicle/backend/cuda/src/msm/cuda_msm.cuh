@@ -32,13 +32,13 @@ namespace msm {
     {
       int tid = blockIdx.x * blockDim.x + threadIdx.x;
       if (tid >= count) return;
-      A point_a = is_montgomery ? A::from_montgomery(points[tid]) : points[tid];
+      A point_a = is_montgomery ? points[tid].from_montgomery() : points[tid];
       P point = P::from_affine(point_a);
-      points_out[tid * prec_factor] = P::to_affine(point);
+      points_out[tid * prec_factor] = point.to_affine();
       for (int i = 1; i < prec_factor; i++) {
         for (unsigned j = 0; j < shift; j++)
-          point = P::dbl(point);
-        points_out[tid * prec_factor + i] = P::to_affine(point);
+          point = point.dbl();
+        points_out[tid * prec_factor + i] = point.to_affine();
       }
     }
 
@@ -248,8 +248,8 @@ namespace msm {
            i++) { // add the relevant points starting from the relevant offset up to the bucket size
         unsigned point_ind = point_indices[bucket_offset + i];
         A point = points[point_ind];
-        bucket = i || !init_buckets ? (point == A::zero() ? bucket : bucket + point)
-                                    : (point == A::zero() ? P::zero() : P::from_affine(point));
+        bucket = i || !init_buckets ? (point.is_zero() ? bucket : bucket + point)
+                                    : (point.is_zero() ? P::zero() : P::from_affine(point));
       }
       buckets[bucket_index] = bucket;
     }
@@ -283,7 +283,7 @@ namespace msm {
         unsigned point_ind = point_indices[bucket_offset + i];
         A point = points[point_ind];
         bucket =
-          i ? (point == A::zero() ? bucket : bucket + point) : (point == A::zero() ? P::zero() : P::from_affine(point));
+          i ? (point.is_zero() ? bucket : bucket + point) : (point.is_zero() ? P::zero() : P::from_affine(point));
       }
       buckets[tid] = run_length ? bucket : P::zero();
     }
@@ -1461,7 +1461,7 @@ namespace msm {
       CHK_IF_RETURN(cudaMemcpyAsync(points_d, points, sizeof(A) * points_size, cudaMemcpyHostToDevice, stream));
     }
 
-    unsigned total_nof_bms = (P::SCALAR_FF_NBITS - 1) / c + 1;
+    unsigned total_nof_bms = (P::SCALAR_FIELD_NBITS - 1) / c + 1;
     unsigned shift = c * ((total_nof_bms - 1) / precompute_factor + 1);
 
     unsigned NUM_THREADS = 1 << 8;

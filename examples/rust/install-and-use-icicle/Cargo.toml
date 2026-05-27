@@ -6,6 +6,6 @@ edition = "2018"
 [dependencies]
 icicle-runtime = { git = "https://github.com/ingonyama-zk/icicle.git", branch="main" }
 icicle-core = { git = "https://github.com/ingonyama-zk/icicle.git", branch="main" }
-
+icicle-bn254 = { path = "../../../wrappers/rust/icicle-curves/icicle-bn254" }
 
 [features]

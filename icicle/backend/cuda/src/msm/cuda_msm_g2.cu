@@ -1,8 +1,12 @@
 #include "cuda_msm.cuh"
 
+#include "icicle/curves/curve_config.h"
+using namespace curve_config;
+
 /************************************** BACKEND REGISTRATION **************************************/
 
 using namespace msm;
+using namespace icicle;
 
 // Note: splitting from cuda_msm.cu to compile it in parallel to g1 msm
 REGISTER_MSM_G2_BACKEND("CUDA", (msm_cuda_wrapper<scalar_t, g2_affine_t, g2_projective_t>));

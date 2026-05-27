@@ -55,12 +55,6 @@ if (FIELD)
         list(APPEND METAL_FIELD_SOURCES src/field/metal_ntt.cpp)
         list(APPEND METAL_FIELD_SOURCES src/polynomials/metal_polynomial_backend.cpp)
     endif()
-    if(POSEIDON)
-        list(APPEND METAL_FIELD_SOURCES src/hash/metal_poseidon.cpp)
-    endif()
-    if(POSEIDON2)
-        list(APPEND METAL_FIELD_SOURCES src/hash/metal_poseidon2.cpp)
-    endif()
     add_library(icicle_metal_field SHARED ${METAL_FIELD_SOURCES})
     set_target_properties(icicle_metal_field PROPERTIES OUTPUT_NAME "icicle_backend_metal_field_${FIELD}")
     target_include_directories(icicle_metal_field PRIVATE include)
@@ -116,36 +110,6 @@ if (CURVE)
         RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/backend/${CURVE}/metal"
         LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/backend/${CURVE}/metal"
         ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/backend/${CURVE}/metal")
-endif()
-
-# Hash library
-if (HASH)
-    # The following call is compiling the shaders for the field and generates a cpp file named ${METALLIB_COMPILED_AS_CPP} to link against
-    set(METALLIB_COMPILED_AS_CPP "${PROJECT_BINARY_DIR}/hash_metallib.cpp")
-    set(SHADERS_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
-    set(SHADER_SOURCES_DIR "${SHADERS_ROOT_DIR}/hash")
-    set(LIB_PREFIX_NAME "hash")
-
-    compile_shaders_to_cpp_source(${LIB_PREFIX_NAME} ${SHADERS_ROOT_DIR} ${SHADER_SOURCES_DIR} ${METALLIB_COMPILED_AS_CPP})
-    add_custom_target(metal_hash_shaders ALL DEPENDS ${METALLIB_COMPILED_AS_CPP})
-
-    set(METAL_HASH_SOURCES ${METALLIB_COMPILED_AS_CPP} src/hash/metal_keccak.cpp)
-    list(APPEND METAL_HASH_SOURCES src/hash/metal_blake2s.cpp)
-    list(APPEND METAL_HASH_SOURCES src/hash/metal_blake3.cpp)
-    list(APPEND METAL_HASH_SOURCES src/hash/metal_merkle_tree.cpp)
-    add_library(icicle_metal_hash SHARED ${METAL_HASH_SOURCES})
-    set_target_properties(icicle_metal_hash PROPERTIES OUTPUT_NAME "icicle_backend_metal_hash")
-    target_include_directories(icicle_metal_hash PRIVATE include)
-    target_link_libraries(icicle_metal_hash PRIVATE metal_api icicle_hash ${METAL_FRAMEWORK} ${FOUNDATION_FRAMEWORK} ${QUARTZCORE_FRAMEWORK})
-
-    # define a unique identifier for this library
-    string(TOUPPER "${LIB_PREFIX_NAME}" LIB_PREFIX_UPPERCASE)
-    target_compile_definitions(icicle_metal_hash PRIVATE METAL_LIBRARY_ID_"${LIB_PREFIX_UPPERCASE}")
-
-    install(TARGETS icicle_metal_hash
-        RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/backend/metal"
-        LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/backend/metal"
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/backend/metal")
 endif()
 
 if (BUILD_TESTS)

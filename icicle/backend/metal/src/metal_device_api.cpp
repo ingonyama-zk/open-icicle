@@ -68,6 +68,17 @@ namespace icicle {
 
     eIcicleError set_device(const Device& device) override
     {
+      // Note: try_checkout_device(id) will generate a challenge and expect the license logic (in device) to know how to
+      // respond. If it doesn't then the check fails. This is making sure that a real cuda_device lib is involved. Can
+      // be hacked via man in the middle attack probably but should make it harder to mock this cuda device lib (which
+      // is otherwise easy to implement without license and mock the license check function.)
+      if (!try_checkout_device(device.id)) {
+        Device active_device = "";
+        ICICLE_CHECK(icicle_get_active_device(active_device));
+        ICICLE_LOG_ERROR << "Failed to checkout license for device " << device << ". Current device remains "
+                         << active_device;
+        return eIcicleError::LICENSE_CHECK_ERROR;
+      }
       // Note that assuming single device for Apple-silicon
       if (device.id != 0) {
         ICICLE_LOG_ERROR << "Invalid devic-id (=" << device.id << ") for Metal backend. Only device-id=0 is available";

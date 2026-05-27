@@ -25,7 +25,6 @@ find_package(CUDAToolkit REQUIRED)
 add_library(icicle_backend_cuda_device SHARED src/cuda_device_api.cu)
 target_include_directories(icicle_backend_cuda_device PRIVATE include)
 target_include_directories(icicle_backend_cuda_device PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-target_link_directories(icicle_backend_cuda_device PRIVATE 3rdparty/lib/linux) # assuming only linux for CUDA backend for now
 target_link_libraries(icicle_backend_cuda_device PUBLIC pthread)
 
 install(TARGETS icicle_backend_cuda_device

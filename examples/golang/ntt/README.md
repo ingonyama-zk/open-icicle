@@ -14,7 +14,7 @@ err := Ntt(
   /* output slice */ result)
 ```
 
-In this example we use the `BN254` and `BLS12381` fields.
+In this example we use the `BN254` and `BLS12377` fields.
 
 ## What's in this example
 

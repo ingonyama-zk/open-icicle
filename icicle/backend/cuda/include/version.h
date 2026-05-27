@@ -1,4 +1,4 @@
 #pragma once
 
 #define CUDA_BACKEND_PRODUCT_NAME    "icicle_cuda"
-#define CUDA_BACKEND_PRODUCT_VERSION "3.9"
+#define CUDA_BACKEND_PRODUCT_VERSION "4.0"

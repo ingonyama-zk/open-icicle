@@ -26,12 +26,18 @@ option(CUDA_BACKEND "Branch/commit to pull for CUDA backend or `local` if under 
 option(METAL_BACKEND "Branch/commit to pull for METAL backend or `local` if under icicle/backend/metal. Default=OFF" OFF)
 option(VULKAN_BACKEND "Branch/commit to pull for VULKAN backend or `local` if under icicle/backend/vulkan. Default=OFF" OFF)
 
+option(DISABLE_ALL_FEATURES "Disables all features" OFF)
+if(DISABLE_ALL_FEATURES)
+  set(ENABLE_ALL_FEATURES OFF)
+else()
+  set(ENABLE_ALL_FEATURES ON)
+endif()
 # features that some fields/curves have and some don't.
-option(NTT "Build NTT" ON)
-option(ECNTT "Build ECNTT" ON)
-option(MSM "Build MSM" ON)
-option(G2 "Build G2 MSM" ON)
-option(EXT_FIELD "Build extension field" ON)
+option(NTT "Build NTT" ${ENABLE_ALL_FEATURES})
+option(ECNTT "Build ECNTT" ${ENABLE_ALL_FEATURES})
+option(MSM "Build MSM" ${ENABLE_ALL_FEATURES})
+option(G2 "Build G2 MSM" ${ENABLE_ALL_FEATURES})
+option(EXT_FIELD "Build extension field" ${ENABLE_ALL_FEATURES})
 option(SANITIZE "Enable memory address sanitizer" OFF)
 
 # address sanitizer
@@ -64,7 +70,7 @@ install(TARGETS icicle_device
 
 if((DEFINED CURVE) AND (DEFINED FIELD))
   if(NOT ("${CURVE}" STREQUAL "${FIELD}"))
-    message(FATAL_ERROR "CURVE and FIELD should not be defined at the same time unless they are equal")
+    message(FATAL_ERROR "CURVE and FIELD should not be defined at the same time. Use -U {CURVE|FIELD} to reset one of them or use --fresh to build with a fresh cache")
   endif()
 endif()
 
