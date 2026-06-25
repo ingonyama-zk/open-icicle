@@ -11,7 +11,7 @@
 > - **ECNTT** (NTT over elliptic curve points)
 > - The supporting scalar/point field, vector, and runtime operations required by the above
 >
-> Only the **BN254** and **BLS12-381** curves are supported. Other curves (BLS12-377, BW6-761, Grumpkin), prime fields (babybear, stark252, m31, koalabear), and primitives outside the list above (e.g. Poseidon, Merkle trees, polynomial APIs, sumcheck) are **not** included in this distribution. Where the upstream ICICLE documentation references those, they do not apply here.
+> Only the **BN254** and **BLS12-381** curves are supported. Other curves (BLS12-377, BW6-761, Grumpkin), prime fields (babybear, stark252, m31, koalabear), and primitives outside the list above (e.g. Poseidon, Merkle trees, polynomial APIs, sumcheck) will be added in the near-term future. Where the upstream ICICLE documentation references those, they do not apply here.
 
 <p align="center">
   <br>
